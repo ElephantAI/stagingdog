@@ -10,7 +10,7 @@
     "start:server": "node --loader ts-node/esm src/server/index.ts",
     "start:client": "node --loader ts-node/esm src/client/index.ts",
     "dev": "NODE_ENV=development tsx watch src/index.ts",
-    "test": "vitest",
+    "test": "vitest run",
     "test:watch": "vitest watch",
     "test:coverage": "vitest run --coverage",
     "test:ui": "vitest --ui",
