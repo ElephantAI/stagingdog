@@ -1,6 +1,6 @@
 # Task ID: 2
 # Title: Implement In-Memory Session Store
-# Status: pending
+# Status: in-progress
 # Dependencies: 1
 # Priority: high
 # Description: Create a session store using an in-memory Map to maintain session state keyed by mcp-session-id.
@@ -13,8 +13,7 @@
    - `deleteSession(sessionId: string): void` - Remove a session
    - `hasSession(sessionId: string): boolean` - Check if session exists
 3. Use a Map to store session data with session IDs as keys
-4. Implement session timeout functionality (optional for MVP)
-5. Export a singleton instance of the SessionStore
+4. Export a singleton instance of the SessionStore
 
 ```typescript
 export class SessionStore {
@@ -49,3 +48,46 @@ export const sessionStore = new SessionStore();
 
 # Test Strategy:
 Write unit tests to verify that the session store correctly creates, retrieves, updates, and deletes sessions. Test edge cases like accessing non-existent sessions and concurrent session operations.
+
+# Subtasks:
+## 1. Create basic SessionStore class with core methods [done]
+### Dependencies: None
+### Description: Implement the foundation of the SessionStore class with the essential methods for session management using a Map data structure.
+### Details:
+1. Create the file `src/server/sessionStore.ts`
+2. Implement the `SessionStore` class with a private Map to store sessions
+3. Implement the five core methods:
+   - `createSession(sessionId: string, initialData: any = {}): void`
+   - `getSession(sessionId: string): any`
+   - `hasSession(sessionId: string): boolean`
+   - `updateSession(sessionId: string, data: any): void`
+   - `deleteSession(sessionId: string): void`
+4. Add basic error handling for updateSession when session doesn't exist
+5. Export the class
+
+Testing approach:
+- Write unit tests to verify each method works correctly
+- Test error cases (e.g., getting/updating non-existent sessions)
+- Test the behavior with various data types stored in sessions
+
+
+## 2. Create and export singleton instance with documentation [pending]
+### Dependencies: 2.1
+### Description: Create a singleton instance of the SessionStore and add comprehensive documentation for the module.
+### Details:
+1. Create a singleton instance of the SessionStore at the bottom of the file
+2. Export the singleton as the default export
+3. Add JSDoc comments to all methods and the class itself
+4. Include usage examples in the documentation
+5. Add type definitions for session data and configuration options
+6. Implement and export additional utility functions if needed:
+   - `generateSessionId(): string` - Helper to generate unique session IDs
+   - `getActiveSessions(): string[]` - Return array of active session IDs
+7. Add a README.md file with usage instructions and examples
+
+Testing approach:
+- Verify the singleton pattern works correctly (multiple imports reference the same instance)
+- Test the utility functions
+- Ensure documentation is complete and accurate
+- Create integration tests that demonstrate typical usage patterns
+
