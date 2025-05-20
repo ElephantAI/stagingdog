@@ -1,0 +1,82 @@
+# Task ID: 14
+# Title: Implement Session Timeout and Heartbeat
+# Status: pending
+# Dependencies: 5, 9
+# Priority: low
+# Description: Add session timeout functionality and SSE heartbeats to improve reliability and resource management.
+# Details:
+1. Update `src/server/sessionStore.ts` to add timeout functionality
+2. Implement a cleanup mechanism to remove expired sessions
+3. Add SSE heartbeats to keep connections alive
+4. Configure timeout and heartbeat intervals
+
+```typescript
+// Add to sessionStore.ts
+export class SessionStore {
+  private sessions: Map<string, any> = new Map();
+  private timeouts: Map<string, NodeJS.Timeout> = new Map();
+  private readonly sessionTimeout = 30 * 60 * 1000; // 30 minutes
+  
+  createSession(sessionId: string, initialData: any = {}): void {
+    this.sessions.set(sessionId, initialData);
+    this.resetTimeout(sessionId);
+  }
+  
+  // ... existing methods ...
+  
+  private resetTimeout(sessionId: string): void {
+    // Clear existing timeout if any
+    if (this.timeouts.has(sessionId)) {
+      clearTimeout(this.timeouts.get(sessionId));
+    }
+    
+    // Set new timeout
+    const timeout = setTimeout(() => {
+      console.log(`Session ${sessionId} expired`);
+      this.deleteSession(sessionId);
+    }, this.sessionTimeout);
+    
+    this.timeouts.set(sessionId, timeout);
+  }
+  
+  // Update session access time on each access
+  getSession(sessionId: string): any {
+    const session = this.sessions.get(sessionId);
+    if (session) {
+      this.resetTimeout(sessionId);
+    }
+    return session;
+  }
+}
+
+// Add to transport.ts
+export function createTransport(req: Request, res: Response): StreamableHTTPServerTransport {
+  const transport = new StreamableHTTPServerTransport();
+  
+  // ... existing code ...
+  
+  if (req.method === 'GET') {
+    // Set up SSE with heartbeats
+    res.setHeader('Content-Type', 'text/event-stream');
+    res.setHeader('Cache-Control', 'no-cache');
+    res.setHeader('Connection', 'keep-alive');
+    
+    // Send heartbeat every 30 seconds
+    const heartbeatInterval = setInterval(() => {
+      res.write(': heartbeat\n\n');
+    }, 30000);
+    
+    // Clean up interval on connection close
+    req.on('close', () => {
+      clearInterval(heartbeatInterval);
+    });
+    
+    // ... existing SSE setup ...
+  }
+  
+  return transport;
+}
+```
+
+# Test Strategy:
+Test session timeout by creating a session and waiting for it to expire. Verify that expired sessions are properly cleaned up. Test SSE heartbeats by establishing a long-running connection and verifying that heartbeats are sent at the configured interval.

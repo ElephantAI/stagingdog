@@ -1,0 +1,75 @@
+# Task ID: 5
+# Title: Implement Session Management Middleware
+# Status: pending
+# Dependencies: 2, 3
+# Priority: high
+# Description: Create middleware to handle session creation, validation, and cleanup based on the Mcp-Session-Id header.
+# Details:
+1. Create `src/server/sessionMiddleware.ts`
+2. Implement middleware to extract and validate the Mcp-Session-Id header
+3. Create new sessions when needed and retrieve existing sessions
+4. Handle session cleanup on DELETE requests
+
+```typescript
+import { Request, Response, NextFunction } from 'express';
+import { v4 as uuidv4 } from 'uuid';
+import { sessionStore } from './sessionStore';
+
+export function sessionMiddleware(req: Request, res: Response, next: NextFunction) {
+  let sessionId = req.headers['mcp-session-id'] as string;
+  
+  // For POST requests with initialize method, create a new session if none exists
+  if (req.method === 'POST' && req.body.method === 'initialize' && !sessionId) {
+    sessionId = uuidv4();
+    res.setHeader('Mcp-Session-Id', sessionId);
+    sessionStore.createSession(sessionId, { createdAt: new Date() });
+    console.log(`Created new session: ${sessionId}`);
+  }
+  
+  // For existing sessions, validate and retrieve
+  if (sessionId) {
+    if (!sessionStore.hasSession(sessionId)) {
+      if (req.method === 'DELETE') {
+        // Session already gone, just acknowledge
+        return res.status(200).end();
+      }
+      return res.status(404).json({
+        jsonrpc: '2.0',
+        error: { code: -32000, message: 'Session not found' },
+        id: req.body.id || null
+      });
+    }
+    
+    // Handle session deletion
+    if (req.method === 'DELETE') {
+      console.log(`Deleting session: ${sessionId}`);
+      sessionStore.deleteSession(sessionId);
+      return res.status(200).end();
+    }
+    
+    // Attach session to request for later use
+    req.session = sessionStore.getSession(sessionId);
+  } else if (req.method !== 'POST' || req.body.method !== 'initialize') {
+    // Require session ID for non-initialize requests
+    return res.status(400).json({
+      jsonrpc: '2.0',
+      error: { code: -32000, message: 'Missing Mcp-Session-Id header' },
+      id: req.body.id || null
+    });
+  }
+  
+  next();
+}
+
+// Extend Express Request type
+declare global {
+  namespace Express {
+    interface Request {
+      session?: any;
+    }
+  }
+}
+```
+
+# Test Strategy:
+Test the middleware with various scenarios: missing session IDs, valid sessions, invalid sessions, and session deletion. Verify that the middleware correctly creates, validates, and cleans up sessions based on the request method and headers.

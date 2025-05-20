@@ -1,0 +1,75 @@
+# Task ID: 12
+# Title: Implement Streaming Client Test
+# Status: pending
+# Dependencies: 11
+# Priority: medium
+# Description: Extend the client to test streaming responses from the server using SSE.
+# Details:
+1. Create `src/client/streamingTest.ts`
+2. Use the MCP SDK's Client class with streaming enabled
+3. Implement a test flow that captures and displays streamed content
+4. Verify that streaming works correctly for both tools
+
+```typescript
+import { Client } from '@modelcontextprotocol/sdk/client';
+
+async function runStreamingTest() {
+  console.log('Starting MCP streaming client test...');
+  
+  // Create MCP client with streaming enabled
+  const client = new Client({
+    serverUrl: 'http://localhost:3000/mcp'
+  });
+  
+  try {
+    // Initialize session
+    console.log('Initializing session...');
+    await client.initialize();
+    console.log('Session initialized with ID:', client.sessionId);
+    
+    // Call imagine tool with streaming
+    console.log('\nCalling imagine tool with streaming...');
+    let streamedContent = '';
+    const imagineResult = await client.callTool(
+      'imagine',
+      { type: 'array', length: 5 },
+      {
+        onContent: (content) => {
+          streamedContent += content;
+          console.log('Streamed content:', content);
+        }
+      }
+    );
+    console.log('Final imagine result:', imagineResult);
+    console.log('Total streamed content:', streamedContent);
+    
+    // Call reveal tool with streaming
+    console.log('\nCalling reveal tool with streaming...');
+    streamedContent = '';
+    const revealResult = await client.callTool(
+      'reveal',
+      { format: 'json' },
+      {
+        onContent: (content) => {
+          streamedContent += content;
+          console.log('Streamed content:', content);
+        }
+      }
+    );
+    console.log('Final reveal result:', revealResult);
+    console.log('Total streamed content:', streamedContent);
+    
+    // Clean up session
+    console.log('\nCleaning up session...');
+    await client.close();
+    console.log('Session closed');
+  } catch (error) {
+    console.error('Error during streaming test:', error);
+  }
+}
+
+runStreamingTest();
+```
+
+# Test Strategy:
+Run the streaming client against the server and verify that it correctly receives and displays streamed content. Check that the final result matches the streamed content and that streaming works for both the imagine and reveal tools.

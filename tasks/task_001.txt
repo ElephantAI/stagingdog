@@ -1,0 +1,88 @@
+# Task ID: 1
+# Title: Project Setup and Configuration
+# Status: pending
+# Dependencies: None
+# Priority: high
+# Description: Initialize the TypeScript project with Express.js and install the MCP SDK and other necessary dependencies.
+# Details:
+1. Create a new directory for the project
+2. Initialize npm project: `npm init -y`
+3. Install TypeScript: `npm install typescript ts-node @types/node --save-dev`
+4. Initialize TypeScript: `npx tsc --init`
+5. Install Express.js: `npm install express @types/express --save`
+6. Install MCP SDK: `npm install @modelcontextprotocol/sdk`
+7. Install SSE dependencies: `npm install eventsource @types/eventsource`
+8. Create basic folder structure:
+   - `/src` - Source code
+   - `/src/server` - Server implementation
+   - `/src/client` - Test client implementation
+   - `/src/utils` - Shared utilities
+9. Configure tsconfig.json for Node.js environment
+10. Add npm scripts in package.json:
+    - `"build": "tsc"`
+    - `"start:server": "ts-node src/server/index.ts"`
+    - `"start:client": "ts-node src/client/index.ts"`
+
+# Test Strategy:
+Verify project structure is correctly set up by running `npm run build` and ensuring it compiles without errors. Check that all dependencies are correctly installed by examining package.json and node_modules.
+
+# Subtasks:
+## 1. Initialize TypeScript Project with Basic Structure [pending]
+### Dependencies: None
+### Description: Set up the project directory, initialize npm and TypeScript, and create the basic folder structure.
+### Details:
+1. Create a new directory for the project
+2. Initialize npm project: `npm init -y`
+3. Install TypeScript and related dependencies: `npm install typescript ts-node @types/node --save-dev`
+4. Initialize TypeScript configuration: `npx tsc --init`
+5. Modify tsconfig.json for Node.js environment:
+   - Set target to 'es2020'
+   - Set module to 'commonjs'
+   - Set outDir to './dist'
+   - Enable esModuleInterop
+   - Set rootDir to './src'
+6. Create the basic folder structure:
+   - `/src` - Source code
+   - `/src/server` - Server implementation
+   - `/src/client` - Test client implementation
+   - `/src/utils` - Shared utilities
+7. Create placeholder index.ts files in each directory to maintain structure
+8. Test by running `npx tsc` to ensure TypeScript compiles without errors
+
+## 2. Install Dependencies and Configure Package Scripts [pending]
+### Dependencies: 1.1
+### Description: Install Express.js, MCP SDK, and other required dependencies, then configure package.json scripts.
+### Details:
+1. Install Express.js: `npm install express @types/express --save`
+2. Install MCP SDK: `npm install @modelcontextprotocol/sdk`
+3. Install SSE dependencies: `npm install eventsource @types/eventsource`
+4. Install any other utility packages needed: `npm install dotenv cors @types/cors`
+5. Update package.json to add the following scripts:
+   - `"build": "tsc"`
+   - `"start:server": "ts-node src/server/index.ts"`
+   - `"start:client": "ts-node src/client/index.ts"`
+   - `"dev:server": "nodemon --exec ts-node src/server/index.ts"`
+   - `"dev:client": "nodemon --exec ts-node src/client/index.ts"`
+6. Create a .gitignore file with appropriate entries (node_modules, dist, .env, etc.)
+7. Test by running `npm install` to ensure all dependencies install correctly
+8. Verify package.json has all the correct dependencies and scripts
+
+## 3. Create Basic Server and Client Templates [pending]
+### Dependencies: 1.1, 1.2
+### Description: Implement minimal working templates for both the server and client components to verify the setup.
+### Details:
+1. Create a basic Express server in src/server/index.ts:
+   - Import Express and create an app
+   - Set up a basic health check endpoint ('/health')
+   - Configure the server to listen on a port (use process.env.PORT || 3000)
+   - Add basic error handling middleware
+2. Create a basic utility file in src/utils/logger.ts for consistent logging
+3. Create a minimal client in src/client/index.ts:
+   - Import necessary dependencies
+   - Add a simple function to test connection to the server
+4. Create a .env file with any configuration variables needed
+5. Create a .env.example file as a template for required environment variables
+6. Test the server by running `npm run start:server` and visiting the health endpoint
+7. Test the client by running `npm run start:client` to ensure it can connect to the server
+8. Verify that the TypeScript compilation works by running `npm run build` and checking the dist folder
+

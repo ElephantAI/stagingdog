@@ -1,0 +1,126 @@
+# Task ID: 13
+# Title: Implement Integration Test Suite
+# Status: pending
+# Dependencies: 11, 12
+# Priority: medium
+# Description: Create a comprehensive test suite to validate the server's compliance with the MCP specification.
+# Details:
+1. Create `src/client/testSuite.ts`
+2. Implement a series of test cases covering different aspects of the MCP specification
+3. Test session management, tool invocation, error handling, and streaming
+4. Provide a summary of test results
+
+```typescript
+import { Client } from '@modelcontextprotocol/sdk/client';
+
+async function runTestSuite() {
+  console.log('Starting MCP integration test suite...');
+  
+  const results = {
+    passed: 0,
+    failed: 0,
+    tests: []
+  };
+  
+  async function runTest(name, testFn) {
+    console.log(`\n--- Running test: ${name} ---`);
+    try {
+      await testFn();
+      console.log(`✅ Test passed: ${name}`);
+      results.passed++;
+      results.tests.push({ name, passed: true });
+    } catch (error) {
+      console.error(`❌ Test failed: ${name}`);
+      console.error(error);
+      results.failed++;
+      results.tests.push({ name, passed: false, error: error.message });
+    }
+  }
+  
+  // Test 1: Basic session initialization
+  await runTest('Session initialization', async () => {
+    const client = new Client({ serverUrl: 'http://localhost:3000/mcp' });
+    await client.initialize();
+    if (!client.sessionId) throw new Error('No session ID returned');
+    await client.close();
+  });
+  
+  // Test 2: Tool listing
+  await runTest('Tool listing', async () => {
+    const client = new Client({ serverUrl: 'http://localhost:3000/mcp' });
+    await client.initialize();
+    const tools = await client.listTools();
+    if (!tools.includes('imagine')) throw new Error('imagine tool not found');
+    if (!tools.includes('reveal')) throw new Error('reveal tool not found');
+    await client.close();
+  });
+  
+  // Test 3: Session persistence
+  await runTest('Session persistence', async () => {
+    const client = new Client({ serverUrl: 'http://localhost:3000/mcp' });
+    await client.initialize();
+    const sessionId = client.sessionId;
+    
+    // Generate data
+    const data = await client.callTool('imagine', { type: 'number' });
+    
+    // Create a new client with the same session ID
+    const client2 = new Client({
+      serverUrl: 'http://localhost:3000/mcp',
+      sessionId
+    });
+    
+    // Retrieve data
+    const retrievedData = await client2.callTool('reveal', {});
+    
+    if (data !== retrievedData) {
+      throw new Error(`Data mismatch: ${data} !== ${retrievedData}`);
+    }
+    
+    await client.close();
+  });
+  
+  // Test 4: Streaming
+  await runTest('Streaming', async () => {
+    const client = new Client({ serverUrl: 'http://localhost:3000/mcp' });
+    await client.initialize();
+    
+    let streamReceived = false;
+    await client.callTool('imagine', { type: 'string' }, {
+      onContent: () => { streamReceived = true; }
+    });
+    
+    if (!streamReceived) throw new Error('No streamed content received');
+    
+    await client.close();
+  });
+  
+  // Test 5: Error handling
+  await runTest('Error handling', async () => {
+    const client = new Client({ serverUrl: 'http://localhost:3000/mcp' });
+    await client.initialize();
+    
+    try {
+      // Call reveal without calling imagine first
+      await client.callTool('reveal', {});
+      throw new Error('Expected error but got success');
+    } catch (error) {
+      // This is expected
+    }
+    
+    await client.close();
+  });
+  
+  // Print summary
+  console.log('\n--- Test Suite Summary ---');
+  console.log(`Passed: ${results.passed}, Failed: ${results.failed}`);
+  console.log('Total:', results.passed + results.failed);
+  
+  return results;
+}
+
+runTestSuite();
+```
+
+# Test Strategy:
+Run the test suite against the server and verify that all tests pass. Check that the test suite correctly identifies and reports any issues with the server's implementation of the MCP specification.

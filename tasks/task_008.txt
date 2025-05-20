@@ -1,0 +1,43 @@
+# Task ID: 8
+# Title: Implement McpServer Instance Management
+# Status: pending
+# Dependencies: 5, 6, 7
+# Priority: high
+# Description: Create a factory to instantiate and manage McpServer instances for each session, registering the imagine and reveal tools.
+# Details:
+1. Create `src/server/mcpServerFactory.ts`
+2. Implement a factory function to create and configure McpServer instances
+3. Register the imagine and reveal tools with each server instance
+4. Store server instances in the session store
+
+```typescript
+import { McpServer } from '@modelcontextprotocol/sdk';
+import { sessionStore } from './sessionStore';
+import { imagineTool } from './tools/imagine';
+import { revealTool } from './tools/reveal';
+
+export function getOrCreateMcpServer(sessionId: string): McpServer {
+  const session = sessionStore.getSession(sessionId);
+  
+  // Create a new McpServer instance if one doesn't exist
+  if (!session.mcpServer) {
+    const mcpServer = new McpServer();
+    
+    // Register tools
+    mcpServer.registerTool(imagineTool);
+    mcpServer.registerTool(revealTool);
+    
+    // Store the server instance in the session
+    session.mcpServer = mcpServer;
+    sessionStore.updateSession(sessionId, session);
+    
+    console.log(`Created new McpServer instance for session ${sessionId}`);
+    return mcpServer;
+  }
+  
+  return session.mcpServer;
+}
+```
+
+# Test Strategy:
+Test the factory by creating McpServer instances for different sessions and verifying that each session gets its own instance with the correct tools registered. Verify that the factory correctly retrieves existing instances for known session IDs.

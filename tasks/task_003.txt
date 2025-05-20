@@ -1,0 +1,52 @@
+# Task ID: 3
+# Title: Implement MCP Server Foundation
+# Status: pending
+# Dependencies: 1, 2
+# Priority: high
+# Description: Create the basic Express.js server with MCP SDK integration and setup the /mcp endpoint for handling JSON-RPC requests.
+# Details:
+1. Create `src/server/index.ts` as the main server entry point
+2. Set up Express.js server with appropriate middleware
+3. Configure CORS to allow local testing
+4. Create the `/mcp` endpoint that handles POST, GET, and DELETE methods
+5. Implement basic error handling
+
+```typescript
+import express from 'express';
+import cors from 'cors';
+import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk';
+import { sessionStore } from './sessionStore';
+
+const app = express();
+const PORT = process.env.PORT || 3000;
+
+// Middleware
+app.use(cors());
+app.use(express.json());
+
+// MCP endpoint handling
+app.post('/mcp', async (req, res) => {
+  const sessionId = req.headers['mcp-session-id'] as string;
+  // Session and MCP handling will be implemented in subsequent tasks
+  res.status(200).json({ jsonrpc: '2.0', id: req.body.id, result: {} });
+});
+
+app.get('/mcp', (req, res) => {
+  const sessionId = req.headers['mcp-session-id'] as string;
+  // SSE setup will be implemented in subsequent tasks
+  res.status(200).end();
+});
+
+app.delete('/mcp', (req, res) => {
+  const sessionId = req.headers['mcp-session-id'] as string;
+  // Session cleanup will be implemented in subsequent tasks
+  res.status(200).end();
+});
+
+app.listen(PORT, () => {
+  console.log(`MCP server running on port ${PORT}`);
+});
+```
+
+# Test Strategy:
+Test the server by running it and making basic HTTP requests to the /mcp endpoint using tools like curl or Postman. Verify that the server responds with appropriate status codes for each HTTP method.

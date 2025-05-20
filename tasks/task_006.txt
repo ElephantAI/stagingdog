@@ -1,0 +1,69 @@
+# Task ID: 6
+# Title: Implement 'imagine' Tool
+# Status: pending
+# Dependencies: 2, 5
+# Priority: medium
+# Description: Create the 'imagine' tool that generates and stores random data within a session.
+# Details:
+1. Create `src/server/tools/imagine.ts`
+2. Implement the imagine tool that generates random data and stores it in the session
+3. Define the tool's schema and parameters
+4. Implement streaming response capability
+
+```typescript
+import { Tool, StreamingToolCall } from '@modelcontextprotocol/sdk';
+import { sessionStore } from '../sessionStore';
+
+export const imagineTool: Tool = {
+  name: 'imagine',
+  description: 'Generates and stores random data within the current session',
+  parameters: {
+    type: 'object',
+    properties: {
+      type: {
+        type: 'string',
+        enum: ['number', 'string', 'array'],
+        description: 'Type of random data to generate'
+      },
+      length: {
+        type: 'integer',
+        description: 'Length for strings or arrays',
+        default: 10
+      }
+    },
+    required: ['type']
+  },
+  handler: async (params: any, context: { sessionId: string }, streamingToolCall?: StreamingToolCall) => {
+    const { type, length = 10 } = params;
+    let result: any;
+    
+    // Generate random data based on type
+    if (type === 'number') {
+      result = Math.random() * 1000;
+    } else if (type === 'string') {
+      result = Array(length).fill(0).map(() => String.fromCharCode(65 + Math.floor(Math.random() * 26))).join('');
+    } else if (type === 'array') {
+      result = Array(length).fill(0).map(() => Math.floor(Math.random() * 100));
+    } else {
+      throw new Error(`Unsupported type: ${type}`);
+    }
+    
+    // Store the result in the session
+    const session = sessionStore.getSession(context.sessionId);
+    session.imaginedData = result;
+    sessionStore.updateSession(context.sessionId, session);
+    
+    // Stream the result if streaming is enabled
+    if (streamingToolCall) {
+      streamingToolCall.streamContent(`Generating ${type}...\n`);
+      await new Promise(resolve => setTimeout(resolve, 500)); // Simulate work
+      streamingToolCall.streamContent(`Generated: ${JSON.stringify(result)}\n`);
+    }
+    
+    return result;
+  }
+};
+```
+
+# Test Strategy:
+Test the imagine tool with different parameter combinations (type, length) and verify that it correctly generates and stores random data in the session. Test both streaming and non-streaming responses. Verify that the tool handles invalid parameters appropriately.

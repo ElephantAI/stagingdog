@@ -1,0 +1,85 @@
+# Task ID: 10
+# Title: Implement Wire Protocol Inspector Middleware
+# Status: pending
+# Dependencies: 3, 4
+# Priority: medium
+# Description: Create middleware to log all inbound/outbound JSON-RPC requests, HTTP headers, and SSE messages for debugging.
+# Details:
+1. Create `src/server/inspectorMiddleware.ts`
+2. Implement middleware to log HTTP headers, request bodies, and response bodies
+3. Create a wrapper for the transport to log SSE messages
+4. Add configuration options to enable/disable different levels of logging
+
+```typescript
+import { Request, Response, NextFunction } from 'express';
+import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk';
+
+// Configuration options
+export const inspectorConfig = {
+  logHeaders: true,
+  logRequests: true,
+  logResponses: true,
+  logSSE: true,
+  verbose: false
+};
+
+// Middleware to log HTTP headers and request bodies
+export function inspectorMiddleware(req: Request, res: Response, next: NextFunction) {
+  const startTime = Date.now();
+  const sessionId = req.headers['mcp-session-id'] as string || 'no-session';
+  
+  // Log request
+  if (inspectorConfig.logHeaders || inspectorConfig.logRequests) {
+    console.log(`\n[${new Date().toISOString()}] ${req.method} ${req.path} (Session: ${sessionId})`);
+  }
+  
+  if (inspectorConfig.logHeaders) {
+    console.log('Headers:', JSON.stringify(req.headers, null, 2));
+  }
+  
+  if (inspectorConfig.logRequests && req.method === 'POST') {
+    console.log('Request Body:', JSON.stringify(req.body, null, 2));
+  }
+  
+  // Capture response
+  if (inspectorConfig.logResponses) {
+    const originalJson = res.json;
+    res.json = function(body) {
+      console.log('Response Body:', JSON.stringify(body, null, 2));
+      console.log(`Request completed in ${Date.now() - startTime}ms`);
+      return originalJson.call(this, body);
+    };
+  }
+  
+  next();
+}
+
+// Wrapper for transport to log SSE messages
+export function createInspectedTransport(transport: StreamableHTTPServerTransport): StreamableHTTPServerTransport {
+  if (inspectorConfig.logSSE) {
+    const originalSetStreamCallbacks = transport.setStreamCallbacks.bind(transport);
+    
+    transport.setStreamCallbacks = function(callbacks) {
+      return originalSetStreamCallbacks({
+        onData: (data) => {
+          console.log('SSE Data:', JSON.stringify(data, null, 2));
+          callbacks.onData(data);
+        },
+        onComplete: () => {
+          console.log('SSE Stream Completed');
+          callbacks.onComplete();
+        },
+        onError: (error) => {
+          console.log('SSE Error:', error);
+          callbacks.onError(error);
+        }
+      });
+    };
+  }
+  
+  return transport;
+}
+```
+
+# Test Strategy:
+Test the inspector middleware by making various requests to the server and verifying that it correctly logs headers, request bodies, response bodies, and SSE messages. Test with different configuration options to ensure that logging can be selectively enabled/disabled.

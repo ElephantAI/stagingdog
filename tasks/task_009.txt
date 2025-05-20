@@ -1,0 +1,69 @@
+# Task ID: 9
+# Title: Integrate MCP Components in Express Server
+# Status: pending
+# Dependencies: 3, 4, 5, 8
+# Priority: high
+# Description: Connect all MCP components (session middleware, transport, McpServer) in the Express server to handle MCP requests.
+# Details:
+1. Update `src/server/index.ts` to integrate all MCP components
+2. Use the session middleware to handle session management
+3. Create transport instances for each request
+4. Get or create McpServer instances for each session
+5. Connect the transport to the McpServer
+
+```typescript
+import express from 'express';
+import cors from 'cors';
+import { sessionMiddleware } from './sessionMiddleware';
+import { createTransport } from './transport';
+import { getOrCreateMcpServer } from './mcpServerFactory';
+
+const app = express();
+const PORT = process.env.PORT || 3000;
+
+// Middleware
+app.use(cors());
+app.use(express.json());
+
+// MCP endpoint handling
+app.post('/mcp', sessionMiddleware, async (req, res) => {
+  const sessionId = req.headers['mcp-session-id'] as string;
+  
+  // Get or create McpServer instance for this session
+  const mcpServer = getOrCreateMcpServer(sessionId);
+  
+  // Create transport for this request
+  const transport = createTransport(req, res);
+  
+  // Connect transport to McpServer
+  mcpServer.setTransport(transport);
+  
+  // The transport will handle sending the response
+});
+
+app.get('/mcp', sessionMiddleware, (req, res) => {
+  const sessionId = req.headers['mcp-session-id'] as string;
+  
+  // Get McpServer instance for this session
+  const mcpServer = getOrCreateMcpServer(sessionId);
+  
+  // Create transport for this request
+  const transport = createTransport(req, res);
+  
+  // Connect transport to McpServer
+  mcpServer.setTransport(transport);
+  
+  // The transport will handle streaming the response
+});
+
+app.delete('/mcp', sessionMiddleware, (req, res) => {
+  // Session cleanup is handled by the middleware
+});
+
+app.listen(PORT, () => {
+  console.log(`MCP server running on port ${PORT}`);
+});
+```
+
+# Test Strategy:
+Test the integrated server by making requests to the /mcp endpoint with different methods (POST, GET, DELETE) and verifying that the server correctly handles sessions, creates transports, and connects them to McpServer instances. Test the full flow of initializing a session, calling tools, and streaming responses.

@@ -1,0 +1,51 @@
+# Task ID: 2
+# Title: Implement In-Memory Session Store
+# Status: pending
+# Dependencies: 1
+# Priority: high
+# Description: Create a session store using an in-memory Map to maintain session state keyed by mcp-session-id.
+# Details:
+1. Create a new file `src/server/sessionStore.ts`
+2. Implement a class `SessionStore` with the following methods:
+   - `createSession(sessionId: string): void` - Initialize a new session
+   - `getSession(sessionId: string): any` - Retrieve session data
+   - `updateSession(sessionId: string, data: any): void` - Update session data
+   - `deleteSession(sessionId: string): void` - Remove a session
+   - `hasSession(sessionId: string): boolean` - Check if session exists
+3. Use a Map to store session data with session IDs as keys
+4. Implement session timeout functionality (optional for MVP)
+5. Export a singleton instance of the SessionStore
+
+```typescript
+export class SessionStore {
+  private sessions: Map<string, any> = new Map();
+  
+  createSession(sessionId: string, initialData: any = {}): void {
+    this.sessions.set(sessionId, initialData);
+  }
+  
+  getSession(sessionId: string): any {
+    return this.sessions.get(sessionId);
+  }
+  
+  updateSession(sessionId: string, data: any): void {
+    if (!this.hasSession(sessionId)) {
+      throw new Error(`Session ${sessionId} not found`);
+    }
+    this.sessions.set(sessionId, data);
+  }
+  
+  deleteSession(sessionId: string): void {
+    this.sessions.delete(sessionId);
+  }
+  
+  hasSession(sessionId: string): boolean {
+    return this.sessions.has(sessionId);
+  }
+}
+
+export const sessionStore = new SessionStore();
+```
+
+# Test Strategy:
+Write unit tests to verify that the session store correctly creates, retrieves, updates, and deletes sessions. Test edge cases like accessing non-existent sessions and concurrent session operations.

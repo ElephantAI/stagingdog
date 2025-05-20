@@ -1,0 +1,55 @@
+# Task ID: 4
+# Title: Implement Transport Layer with StreamableHTTPServerTransport
+# Status: pending
+# Dependencies: 3
+# Priority: high
+# Description: Set up the MCP transport layer using StreamableHTTPServerTransport to handle JSON-RPC requests and SSE responses.
+# Details:
+1. Create `src/server/transport.ts` to handle MCP transport configuration
+2. Implement a factory function to create StreamableHTTPServerTransport instances for each session
+3. Configure transport to handle JSON-RPC requests and SSE responses
+4. Integrate with Express.js request and response objects
+
+```typescript
+import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk';
+import { Request, Response } from 'express';
+
+export function createTransport(req: Request, res: Response): StreamableHTTPServerTransport {
+  const transport = new StreamableHTTPServerTransport();
+  
+  // Configure transport for the current request/response
+  if (req.method === 'POST') {
+    transport.handleRequest(req.body, {
+      setResult: (result) => {
+        res.json(result);
+      },
+      setError: (error) => {
+        res.status(400).json(error);
+      }
+    });
+  } else if (req.method === 'GET') {
+    // Set up SSE
+    res.setHeader('Content-Type', 'text/event-stream');
+    res.setHeader('Cache-Control', 'no-cache');
+    res.setHeader('Connection', 'keep-alive');
+    
+    transport.setStreamCallbacks({
+      onData: (data) => {
+        res.write(`data: ${JSON.stringify(data)}\n\n`);
+      },
+      onComplete: () => {
+        res.end();
+      },
+      onError: (error) => {
+        res.write(`data: ${JSON.stringify(error)}\n\n`);
+        res.end();
+      }
+    });
+  }
+  
+  return transport;
+}
+```
+
+# Test Strategy:
+Test the transport layer by creating mock Request and Response objects and verifying that the transport correctly handles JSON-RPC requests and sets up SSE responses. Ensure that the transport correctly forwards results and errors to the client.
