@@ -3,10 +3,13 @@ import express from 'express';
 import { randomUUID } from 'node:crypto';
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js';
-import { isInitializeRequest } from '@modelcontextprotocol/sdk/types.js';
 import { Session, sessionStore } from './sessionStore.js'
 
 import { ok as assert } from 'assert'
+
+function looksLikeInitializeRequest(req_body: { method: string }): boolean {
+  return req_body?.method === 'initialize';
+}
 
 export function createMcpServerApp(options: { 
                                       defineTools?: (server:McpServer) => void;
@@ -23,13 +26,19 @@ export function createMcpServerApp(options: {
     const sessionId = req.headers['mcp-session-id'] as string | undefined;
     let transport: StreamableHTTPServerTransport;
 
+    console.log(`got a POST to /mcp: ${JSON.stringify(req.body, null, 2)}`);
+    console.log('looksLikeInitializeRequest:', looksLikeInitializeRequest(req.body));
+
     let session:Session|undefined = undefined;
     if (sessionId && (session=sessionStore.getSession(sessionId))) {
       transport = session.transport
-    } else if (!sessionId && isInitializeRequest(req.body)) {
+      await transport.handleRequest(req, res, req.body);
+      return;
+    } else if (!sessionId && looksLikeInitializeRequest(req.body)) {
       transport = new StreamableHTTPServerTransport({
-        sessionIdGenerator: () => randomUUID(),
+        sessionIdGenerator: () => { const sessionId= randomUUID(); console.log(`generated sessionId ${sessionId}`); return sessionId; },
         onsessioninitialized: (newSessionId) => {
+          console.log(`onsessioninitialized got called with ${newSessionId}`);
           sessionStore.createSession(newSessionId,transport,{})
         },
       });
@@ -56,14 +65,16 @@ export function createMcpServerApp(options: {
       }
 
       await mcpServer.connect(transport);
+      await transport.handleRequest(req, res, req.body);
+
       const sessionId = transport.sessionId;
       assert(sessionId,"No sessionId in a connected transport?")
       const session = sessionStore.getSession(sessionId);
-      assert(session,`SessionId ${sessionId} was not added to SessionStore during McpServer.connect?`)
+      assert(session,`SessionId ${sessionId} was not added to SessionStore session initialization?`)
       if (options.sessionInitHook) {
         await options.sessionInitHook(session);
       }
-
+      return;
     } else {
       res.status(400).json({
         jsonrpc: '2.0',
@@ -75,8 +86,6 @@ export function createMcpServerApp(options: {
       });
       return;
     }
-
-    await transport.handleRequest(req, res, req.body);
   });
 
   // MCP GET/DELETE
