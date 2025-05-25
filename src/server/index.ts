@@ -1,12 +1,24 @@
 import express, { type Request, type Response, type NextFunction, type Application } from 'express';
 import { createServer, type Server as HttpServer } from 'node:http';
+import cors from 'cors';
+import {createMcpServerApp } from './mcpServer.js';
+import { defineTools } from './tools/defineTools.js'
 
 // Create Express application
 const app: Application = express();
 const PORT = process.env.PORT ? parseInt(process.env.PORT, 10) : 3000;
 
-// Middleware to parse JSON bodies
-app.use(express.json());
+// Enable CORS for all routes
+app.use(cors({
+  origin: '*',
+  methods: ['GET', 'POST', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'mcp-session-id'],
+}));
+
+// Mount MCP routes
+
+const mcpApp = createMcpServerApp({defineTools});
+app.use(mcpApp);
 
 // Request logging middleware
 app.use((req: Request, _res: Response, next: NextFunction): void => {

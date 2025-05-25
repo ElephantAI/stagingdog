@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
-import { startServer } from './server';
-import { ApiClient } from './client';
+import { startServer } from './server/index.js';
+import { ApiClient } from './client/index.js';
 
 /**
  * Main application entry point

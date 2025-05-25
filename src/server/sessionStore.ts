@@ -1,3 +1,8 @@
+
+import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js';
+
+export type SessionTransport = StreamableHTTPServerTransport
+
 /**
  * Interface defining the shape of session data stored in the SessionStore.
  */
@@ -5,12 +10,18 @@ export interface SessionData {
   [key: string]: unknown;
 }
 
+export interface Session {
+  id: string,
+  transport: SessionTransport,
+  data: SessionData
+}
+
 /**
  * In-memory session store for managing MCP sessions.
  * Uses a Map to store session data with session IDs as keys.
  */
 export class SessionStore {
-  private readonly sessions: Map<string, SessionData> = new Map();
+  private readonly sessions: Map<string, Session> = new Map();
 
   /**
    * Creates a new session with the given session ID and optional initial data.
@@ -18,12 +29,14 @@ export class SessionStore {
    * @param initialData - Optional initial data to store in the session
    * @throws {Error} If a session with the same ID already exists
    */
-  public createSession(sessionId: string, initialData: SessionData = {}): void {
+  public createSession(sessionId: string, transport: SessionTransport, initialData: SessionData = {}): Session {
     if (this.hasSession(sessionId)) {
       throw new Error(`Session with ID ${sessionId} already exists`);
     }
 
-    this.sessions.set(sessionId, initialData);
+    const newSession:Session = { id:sessionId, transport, data: initialData }
+    this.sessions.set(sessionId, newSession );
+    return newSession
   }
 
   /**
@@ -31,7 +44,7 @@ export class SessionStore {
    * @param sessionId - The ID of the session to retrieve
    * @returns The session data, or undefined if not found
    */
-  public getSession(sessionId: string): SessionData | undefined {
+  public getSession(sessionId: string): Session | undefined {
     return this.sessions.get(sessionId);
   }
 
@@ -46,10 +59,10 @@ export class SessionStore {
       throw new Error(`Session ${sessionId} not found`);
     }
 
-    const session = this.getSession(sessionId)!;
-    const updatedSession: SessionData = { ...session, ...data };
+    const session:Session = this.getSession(sessionId)!;
+    const updatedSessionData: SessionData = { ...session, ...data };
+    session.data=updatedSessionData
 
-    this.sessions.set(sessionId, updatedSession);
   }
 
   /**
@@ -74,7 +87,7 @@ export class SessionStore {
    * Gets all session IDs currently stored in the session store.
    * @returns An array of all session IDs
    */
-  public getAllSessionIds(): string[] {
+  public getAllSessionIds(): readonly string[] {
     return Array.from(this.sessions.keys());
   }
 }
