@@ -1,33 +1,19 @@
 #!/usr/bin/env node
+import 'dotenv/config';
 
 import { startServer } from './server/index.js';
-import { ApiClient } from './client/index.js';
 
 /**
  * Main application entry point
  */
 async function main() {
-  try {
-    // Start the server
-    await startServer();
-    
-    // Create a client to test the server
-    const client = new ApiClient();
-    
-    // Test the server connection
-    console.log('Testing server connection...');
-    const health = await client.checkHealth();
-    console.log('Server health check successful:', health);
-    
-  } catch (error) {
-    console.error('Application failed to start:', error);
-    process.exit(1);
-  }
+  await startServer();
 }
 
-// Run the application
-if (require.main === module) {
+// Run the application if this file is the entry point
+if (import.meta.url === `file://${process.argv[1]}` || import.meta.url === new URL(process.argv[1], import.meta.url).href) {
   main().catch(console.error);
 }
 
 export { main };
+
