@@ -1,0 +1,34 @@
+#!/usr/bin/env bash
+TMPFILE=$(mktemp)
+curl -s -D "$TMPFILE" -o /dev/null http://localhost:3088/mcp   \
+  -H "Accept: application/json, text/event-stream" \
+  -H "Content-Type: application/json"   \
+  -d '{
+    "jsonrpc": "2.0",
+    "id": "1",
+    "method": "initialize",
+    "params": {
+      "protocolVersion": "2025-03-26",
+      "capabilities": {},
+      "clientInfo": {
+        "name": "curl-test",
+        "version": "1.0.0"
+      }
+    }
+  }'
+
+MCP_SESSION_ID=$(grep -i mcp-session-id "$TMPFILE" | tr -d '\r' | awk '{print $2}')
+echo "MCP_SESSION_ID=$MCP_SESSION_ID"
+
+curl -i -X POST http://localhost:3088/mcp   \
+  -H "Accept: application/json, text/event-stream" \
+  -H "Content-Type: application/json"   \
+  -H "mcp-session-id: $MCP_SESSION_ID" \
+  -d '{
+    "jsonrpc": "2.0",
+    "id": "1",
+    "method": "tools/list",
+    "params": {}
+  }'
+
+rm $TMPFILE
