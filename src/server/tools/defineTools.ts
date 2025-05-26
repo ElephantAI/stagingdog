@@ -55,7 +55,7 @@ export function defineTools(server: McpServer): void {
       n: z.number(),
     },
     outputSchema: {
-      result: z.boolean(),
+      isLess: z.boolean(),
     },
   }, async ({ n }, extra:ExtraData ) => {
     const session = requireSession('isLessThan',extra);
@@ -63,7 +63,8 @@ export function defineTools(server: McpServer): void {
     const imagineRange = session.data.imagineRange as {lower:number,upper:number};
     assert(!(session.data.imaginedNumber > imagineRange.upper || session.data.imaginedNumber < imagineRange.lower),`imaginedNumber ${session.data.imaginedNumber} is outside of range ${JSON.stringify(imagineRange)}`)
     
-    return mcpObjectResult({ result: session.data.imaginedNumber < n });
+    const result:CallToolResult = { structuredContent: { isLess: Math.floor(session.data.imaginedNumber) < Math.floor(n) } }
+    return result
   });
 
   // guess
@@ -77,8 +78,9 @@ export function defineTools(server: McpServer): void {
     },
   }, async ({ n }, extra:ExtraData) => {
     const session = requireSession('guess',extra);
-    if (typeof session?.data.secret !== 'number') throw new Error('No number imagined yet');
-    return mcpObjectResult({ correct: session.data.secret === n });
+    if (typeof session?.data.imaginedNumber !== 'number') throw new Error('No number imagined yet');
+    const result:CallToolResult = { structuredContent: { correct: (Math.floor(session.data.imaginedNumber) === Math.floor(n)) } }
+    return result
   });
 
   // reveal
@@ -90,7 +92,8 @@ export function defineTools(server: McpServer): void {
   }, async (_input, extra:ExtraData) => {
     const session = requireSession('reveal',extra);
     if (typeof session?.data.secret !== 'number') throw new Error('No number imagined yet');
-    return mcpObjectResult({ secret: session.data.secret });
+    const result:CallToolResult = { structuredContent: { secret: session.data.secret } }
+    return result
   });
 }
 
