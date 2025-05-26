@@ -43,7 +43,9 @@ export function defineTools(server: McpServer): void {
     const n = Math.floor(Math.random() * (upper - lower + 1)) + lower;
     session.data.imagineRange = { lower, upper };
     session.data.imaginedNumber = n
-    return mcpObjectResult({lower,upper})
+    
+    const result:CallToolResult = { structuredContent: {lower, upper} }
+    return result
   });
 
   // isLessThan
