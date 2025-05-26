@@ -59,7 +59,6 @@
     "preserveConstEnums": true,
     
     /* Module Resolution */
-    "allowSyntheticDefaultImports": true,
     "allowImportingTsExtensions": false,
     "moduleDetection": "force"
   },

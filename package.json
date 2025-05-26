@@ -12,6 +12,8 @@
     "start:client": "node --loader ts-node/esm src/client/index.ts",
     "dev": "NODE_ENV=development tsx watch src/index.ts",
     "test": "vitest run",
+    "test:integration": "bash -c 'source ~/miniconda3/etc/profile.d/conda.sh && conda activate mcptest && cd test/integration && for t in test_*.py; do pytest $t --tb=short -q || exit $?; done'",
+    "itest": "npm run test:integration",
     "test:watch": "vitest watch",
     "test:coverage": "vitest run --coverage",
     "test:ui": "vitest --ui",

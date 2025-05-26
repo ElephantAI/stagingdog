@@ -16,8 +16,6 @@ function problemsWithInitializeParams(req: any): string|undefined {
   if (typeof params !== 'object' || params === null) {
     problems.push('Missing or invalid "params" — expected an object.');
   } else {
-    if (! Array.isArray(params.tools) ) problems.push('Missing or invalid list of tools');
-
     if (typeof params.protocolVersion !== 'string') {
       problems.push('Missing or invalid "protocolVersion" — expected a string.');
     }
@@ -83,15 +81,14 @@ function strictlyValidateInitializeCall(req: express.Request): Array<string> {
             "clientInfo": {
               "name": "curl-test",
               "version": "1.0.0"
-            },
-            "tools": ["*"]
+            }
           }
         }'
     */
 
    const problems:Array<string> = []
-   if (!req.body.jsonrpc) problems.push('initialize call must specify jsonrpc version');
-   if (!req.body.id) problems.push('initialize call must specify an id');
+   if (req.body.jsonrpc == 'undefined') problems.push('initialize call must specify jsonrpc version');
+   if (req.body.id == 'undefined') problems.push('initialize call must specify an id');
    if (req.body.method !== "initialize") problems.push('method must be initialize');
    const paramsProblems = problemsWithInitializeParams(req);
    if (paramsProblems) problems.push(paramsProblems);
