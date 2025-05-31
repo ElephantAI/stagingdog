@@ -1,6 +1,6 @@
 
 import { z } from 'zod';
-import { Session, sessionStore } from '../sessionStore.js'
+import { Session, sessionStore } from '../../common/sessionStore.js'
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { RequestHandlerExtra } from '@modelcontextprotocol/sdk/shared/protocol.js'
 import { ServerNotification, ServerRequest, CallToolResult } from '@modelcontextprotocol/sdk/types.js'

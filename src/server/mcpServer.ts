@@ -4,7 +4,7 @@ import { randomUUID } from 'node:crypto';
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { isInitializeRequest } from '@modelcontextprotocol/sdk/types.js';
 import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js';
-import { Session, sessionStore } from './sessionStore.js'
+import { Session, sessionStore } from '../common/sessionStore.js'
 
 import { ok as assert } from 'assert'
 
