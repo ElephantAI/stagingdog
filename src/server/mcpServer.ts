@@ -129,7 +129,7 @@ export function createMcpServerApp(options: {
     let transport: StreamableHTTPServerTransport;
 
     console.log(`got a POST to /mcp: ${JSON.stringify(req.body, null, 2)}`);
-    console.log('looksLikeInitializeRequest:', looksLikeInitializeRequest(req.body));
+    // console.log('looksLikeInitializeRequest:', looksLikeInitializeRequest(req.body));
 
     if (looksLikeInitializeRequest(req.body)) {
       const problems:Array<string> = [];

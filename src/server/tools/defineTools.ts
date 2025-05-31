@@ -89,10 +89,10 @@ export function defineTools(server: McpServer): void {
     outputSchema: {
       secret: z.number(),
     },
-  }, async (_input, extra:ExtraData) => {
+  }, async (extra:ExtraData) => {
     const session = requireSession('reveal',extra);
-    if (typeof session?.data.secret !== 'number') throw new Error('No number imagined yet');
-    const result:CallToolResult = { structuredContent: { secret: session.data.secret } }
+    if (typeof session?.data.imaginedNumber !== 'number') throw new Error('No number imagined yet');
+    const result:CallToolResult = { structuredContent: { secret: session.data.imaginedNumber } }
     return result
   });
 }
