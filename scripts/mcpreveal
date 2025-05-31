@@ -52,5 +52,9 @@ curl -i -X POST http://localhost:3088/mcp   \
     }
   }'
 
+  # Cleanup: delete the session
+curl -i -X DELETE http://localhost:3088/mcp \
+  -H "mcp-session-id: $MCP_SESSION_ID"
+
 rm $TMPFILE
 

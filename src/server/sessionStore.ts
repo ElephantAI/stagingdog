@@ -10,10 +10,17 @@ export interface SessionData {
   [key: string]: unknown;
 }
 
-export interface Session {
-  id: string,
-  transport: SessionTransport,
-  data: SessionData
+export class Session {
+  id: string;
+  transport: SessionTransport;
+  data: SessionData;
+
+  constructor(id: string, transport: SessionTransport, data: SessionData = {}) {
+    this.id = id;
+    this.transport = transport;
+    this.data = data;
+  }
+
 }
 
 /**
@@ -23,6 +30,13 @@ export interface Session {
 export class SessionStore {
   private readonly sessions: Map<string, Session> = new Map();
 
+  public add(session:Session) {
+    if (this.hasSession(session.id)) {
+      throw new Error(`Session with ID ${session.id} already exists`);
+    }
+    this.sessions.set(session.id, session );
+  }
+
   /**
    * Creates a new session with the given session ID and optional initial data.
    * @param sessionId - Unique identifier for the session
@@ -30,14 +44,11 @@ export class SessionStore {
    * @throws {Error} If a session with the same ID already exists
    */
   public createSession(sessionId: string, transport: SessionTransport, initialData: SessionData = {}): Session {
-    if (this.hasSession(sessionId)) {
-      throw new Error(`Session with ID ${sessionId} already exists`);
-    }
-
-    const newSession:Session = { id:sessionId, transport, data: initialData }
-    this.sessions.set(sessionId, newSession );
+    const newSession:Session = new Session(sessionId, transport , initialData );
+    this.add(newSession)
     return newSession
   }
+
 
   /**
    * Retrieves session data for the given session ID.
@@ -70,8 +81,14 @@ export class SessionStore {
    * @param sessionId - The ID of the session to delete
    * @returns true if the session was deleted, false if it didn't exist
    */
-  public deleteSession(sessionId: string): boolean {
-    return this.sessions.delete(sessionId);
+  public async deleteSession(sessionId: string): Promise<boolean> {
+    const s = this.getSession(sessionId);
+
+    if (s) {
+        return this.sessions.delete(sessionId);
+    } else {
+      return false
+    }
   }
 
   /**

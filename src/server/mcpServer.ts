@@ -111,6 +111,8 @@ export function createMcpServerApp(options: {
 
   // MCP POST
   router.post('/mcp', async (req, res) => {
+
+    console.log(`existing session ids are ${sessionStore.getAllSessionIds()}`);
     
 
     const requestHeaderProblems = strictlyValidateRequestHeaders(req);
@@ -159,21 +161,13 @@ export function createMcpServerApp(options: {
         sessionIdGenerator: () => { const sessionId= randomUUID(); console.log(`generated sessionId ${sessionId}`); return sessionId; },
         onsessioninitialized: (newSessionId) => {
           console.log(`onsessioninitialized got called with ${newSessionId}`);
-          sessionStore.createSession(newSessionId,transport,{})
+          const newSession = new Session(newSessionId,transport,{})
+          sessionStore.add(newSession)
         },
       });
 
-      transport.onclose = async () => {
-        if (transport.sessionId) {
-          const session = sessionStore.getSession(transport.sessionId)
-          if (session) {
-            if (options.sessionEndHook) {
-              await options.sessionEndHook(session);
-            }
-            sessionStore.deleteSession(transport.sessionId)
-          }
-        }
-      };
+      // For some reason transport.onclose() does not get called when the transport is closed so I've put the session
+      // deletion logic in the http DELETE handler.
 
       const mcpServer = new McpServer({
         name: 'example-server',
@@ -209,7 +203,7 @@ export function createMcpServerApp(options: {
   });
 
   // MCP GET/DELETE
-  const handleSessionRequest = async (req: express.Request, res: express.Response) => {
+  const handleGetSessionRequest = async (req: express.Request, res: express.Response) => {
     const sessionId = req.headers['mcp-session-id'] as string | undefined;
     let session:Session|undefined = undefined;
     if (!sessionId || !(session = sessionStore.getSession(sessionId))) {
@@ -221,8 +215,32 @@ export function createMcpServerApp(options: {
     await transport.handleRequest(req, res);
   };
 
-  router.get('/mcp', handleSessionRequest);
-  router.delete('/mcp', handleSessionRequest);
+  const handleDeleteSessionRequest = async (req: express.Request, res: express.Response) => {
+    const sessionId = req.headers['mcp-session-id'] as string | undefined;
+    console.log(`handling a DELETE request with sessionId ${sessionId}`);
+    let session:Session|undefined = undefined;
+    if (!sessionId || !(session = sessionStore.getSession(sessionId))) {
+      res.status(400).send('Invalid or missing session ID');
+      return;
+    }
+    const transport = session.transport
+    if (options.sessionEndHook) {
+        console.log(`calling sessionEndHook for ${sessionId}`)
+        await options.sessionEndHook(session);
+    }
+    console.log(`deleting session ${sessionId}`); 
+    await sessionStore.deleteSession(sessionId)
+    if (typeof transport.close === 'function') {
+      console.log("calling transport.close")
+      await transport.close(); // This will call your transport.onclose
+    } else {
+      console.log("no transport.close function exists");
+    }
+    res.status(204).end(); // No Content
+  };
+
+  router.get('/mcp', handleGetSessionRequest);
+  router.delete('/mcp', handleDeleteSessionRequest);
 
   return router;
 }
