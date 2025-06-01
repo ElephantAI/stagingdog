@@ -5,7 +5,16 @@ import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { RequestHandlerExtra } from '@modelcontextprotocol/sdk/shared/protocol.js'
 import { ServerNotification, ServerRequest, CallToolResult } from '@modelcontextprotocol/sdk/types.js'
 import { ok as assert } from 'assert'
-import { Browser, NavigationParams, NavigationResult, navigationParamsShape, navigationResultShape } from '../../services/browser.js'
+import { Browser,
+         navigationParamsShape,
+         NavigationParams,
+         navigationResultShape,
+         NavigationResult,
+         performInstructionParamsShape,
+         PerformInstructionParams,
+         performInstructionResultShape,
+         PerformInstructionResult
+       } from '../../services/browser.js'
 
 type ExtraData = RequestHandlerExtra<ServerRequest,ServerNotification>;
 
@@ -94,16 +103,30 @@ export function defineTools(server: McpServer): void {
 
   // Real tools start here
   server.registerTool('navigateTo', {
-    description: 'Pick a random number between lower and upper',
+    description: 'Navigate to a URL and optionally capture a screenshot or observations.',
     inputSchema: navigationParamsShape,
     outputSchema: navigationResultShape
   }, async (inputParams:NavigationParams, extra:ExtraData) => {
-    const session = await requireSession('imagine',extra);
+    const session = await requireSession('navigateTo',extra);
     const browser:Browser = session.data.browser as Browser;
     assert(browser, `browser not initialized in session ${session.id}`)
     
     const navigationResult:NavigationResult = await browser.navigateToPage(inputParams)
     const result:CallToolResult = { structuredContent: navigationResult }
+    return result
+  });
+
+  server.registerTool('performInstruction', {
+    description: 'Execute a natural language instruction and optionally capture results.',
+    inputSchema: performInstructionParamsShape,
+    outputSchema: performInstructionResultShape
+  }, async (inputParams:PerformInstructionParams, extra:ExtraData) => {
+    const session = await requireSession('performInstruction',extra);
+    const browser:Browser = session.data.browser as Browser;
+    assert(browser, `browser not initialized in session ${session.id}`)
+    
+    const performInstructionResult:PerformInstructionResult = await browser.performInstruction(inputParams)
+    const result:CallToolResult = { structuredContent: performInstructionResult }
     return result
   });
 }

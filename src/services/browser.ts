@@ -22,17 +22,18 @@ export const observationSchema = z.object({
 export const observationListSchema = z.array(observationSchema)
 
 export const navigationParamsShape = {
-      url: z.string(),
-      screenshot: viewportSpecSchema
-                  .describe("Optional viewport size for screenshot")
-                  .optional(),
-      observations: observationsSpecSchema
-                   .describe("Controls what observations to include (true, string, or undefined)")
-                   .optional(),
-       waitForLoad: z.number().int()
-                    .describe("Milliseconds to wait after page load")
-                    .optional()
+  url: z.string(),
+  screenshot: viewportSpecSchema
+              .describe("Optional viewport size for screenshot")
+              .optional(),
+  observations: observationsSpecSchema
+                .describe("Controls what observations to include (true, string, or undefined)")
+                .optional(),
+  waitForLoad: z.number().int()
+               .describe("Milliseconds to wait after page load")
+               .optional()
 }
+
 
 export const navigationResultShape = {
   currentUrl: z.string()
@@ -48,12 +49,36 @@ export const navigationResultShape = {
 const navigationParamsSchema = z.object(navigationParamsShape)
 const navigationResultSchema = z.object(navigationResultShape)
 
+export const performInstructionParamsShape = {
+  instruction: z.string()
+               .describe("Natural language instruction to execute"),
+  waitFor: z.union([z.string(), z.number().int()])
+           .describe("Description of event to await or milliseconds to wait after action")
+           .optional(),
+  screenshot: viewportSpecSchema
+              .describe("Optional viewport size for screenshot")
+              .optional(),
+  observations: observationsSpecSchema
+                .describe("Controls what observations to include (true, string, or undefined)")
+                .optional(),
+  regionDescription: z.string()
+                     .describe("Description of the specific region   to capture")
+                     .optional()
+}
+
+export const performInstructionResultShape = navigationResultShape;
+
+const performInstructionParamsSchema = z.object(performInstructionParamsShape);
+const performInstructionResultSchema = z.object(performInstructionResultShape);
+
 export type ViewportSpec = z.infer<typeof viewportSpecSchema>
 export type ObservationsSpec = z.infer<typeof observationsSpecSchema>
 export type Observation = z.infer<typeof observationSchema>
 export type ObservationList = z.infer<typeof observationListSchema>
 export type NavigationParams = z.infer<typeof navigationParamsSchema>
 export type NavigationResult = z.infer<typeof navigationResultSchema>
+export type PerformInstructionParams = z.infer<typeof performInstructionParamsSchema>
+export type PerformInstructionResult = z.infer<typeof performInstructionResultSchema>
 
 
 export class Browser {
@@ -215,12 +240,7 @@ export class Browser {
     waitFor,
     screenshot,
     observations
-  }: {
-    instruction: string;
-    waitFor?: string | number;
-    screenshot?: ViewportSpec;
-    observations?: ObservationsSpec;
-  }): Promise<NavigationResult> {
+  }: PerformInstructionParams ): Promise<PerformInstructionResult> {
     if (!this.stagehand?.page) {
       throw new Error('Stagehand not initialized')
     }
@@ -241,7 +261,7 @@ export class Browser {
     await Browser.waitForPageToSettle(this.stagehand.page)
 
     // Handle screenshot if requested
-    const result: NavigationResult = {
+    const result: PerformInstructionResult = {
       currentUrl: this.stagehand.page.url()
     }
 

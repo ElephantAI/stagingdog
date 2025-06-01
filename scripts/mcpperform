@@ -1,0 +1,97 @@
+#!/usr/bin/env bash
+TMPFILE=$(mktemp)
+curl -s -D "$TMPFILE" http://localhost:3088/mcp   \
+  -H "Accept: application/json, text/event-stream" \
+  -H "Content-Type: application/json"   \
+  -d '{
+    "jsonrpc": "2.0",
+    "id": "0",
+    "method": "initialize",
+    "params": {
+      "protocolVersion": "2025-03-26",
+      "capabilities": {},
+      "clientInfo": {
+        "name": "curl-test",
+        "version": "1.0.0"
+      }
+    }
+  }'
+
+MCP_SESSION_ID=$(grep -i mcp-session-id "$TMPFILE" | tr -d '\r' | awk '{print $2}')
+echo "MCP_SESSION_ID=$MCP_SESSION_ID"
+
+curl -i -X POST http://localhost:3088/mcp   \
+  -H "Accept: application/json, text/event-stream" \
+  -H "Content-Type: application/json"   \
+  -H "mcp-session-id: $MCP_SESSION_ID" \
+  -d '{
+    "jsonrpc": "2.0",
+    "id": "1",
+    "method": "tools/call",
+    "params": {
+      "name": "navigateTo",
+      "arguments": {
+            "url": "https://staging.elephantllm.com",
+            "screenshot":  { "width": 1280, "height":720 },
+            "observations": true
+          }
+    }
+  }'
+
+curl -i -X POST http://localhost:3088/mcp   \
+  -H "Accept: application/json, text/event-stream" \
+  -H "Content-Type: application/json"   \
+  -H "mcp-session-id: $MCP_SESSION_ID" \
+  -d '{
+    "jsonrpc": "2.0",
+    "id": "2",
+    "method": "tools/call",
+    "params": {
+      "name": "performInstruction",
+      "arguments": {
+            "instruction": "click the sign in button",
+            "screenshot":  { "width": 1280, "height":720 }
+          }
+    }
+  }'
+
+curl -i -X POST http://localhost:3088/mcp   \
+  -H "Accept: application/json, text/event-stream" \
+  -H "Content-Type: application/json"   \
+  -H "mcp-session-id: $MCP_SESSION_ID" \
+  -d '{
+    "jsonrpc": "2.0",
+    "id": "3",
+    "method": "tools/call",
+    "params": {
+      "name": "performInstruction",
+      "arguments": {
+            "instruction": "type steve@stevemadere.com in the email address input",
+            "screenshot":  { "width": 1280, "height":720 }
+          }
+    }
+  }'
+
+curl -i -X POST http://localhost:3088/mcp   \
+  -H "Accept: application/json, text/event-stream" \
+  -H "Content-Type: application/json"   \
+  -H "mcp-session-id: $MCP_SESSION_ID" \
+  -d '{
+    "jsonrpc": "2.0",
+    "id": "4",
+    "method": "tools/call",
+    "params": {
+      "name": "performInstruction",
+      "arguments": {
+            "instruction": "click the Continue with Email button",
+            "screenshot":  { "width": 1280, "height":720 }
+          }
+    }
+  }'
+
+  # Cleanup: delete the session
+curl -i -X DELETE http://localhost:3088/mcp \
+  -H "mcp-session-id: $MCP_SESSION_ID"
+
+rm $TMPFILE
+
