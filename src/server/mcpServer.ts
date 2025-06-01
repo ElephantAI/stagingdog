@@ -8,6 +8,7 @@ import { Session, sessionStore } from '../common/sessionStore.js'
 
 import { ok as assert } from 'assert'
 
+type AsyncSessionLifecycleHook = (session: Session) => Promise<void>;
 
 function problemsWithInitializeParams(req: any): string|undefined {
   const problems: string[] = [];
@@ -99,10 +100,24 @@ function looksLikeInitializeRequest(req_body: { method: string }): boolean {
   return req_body?.method === 'initialize';
 }
 
+let sessionLifetimeMs:number = process.env.SESSION_LIFETIME_MS ? parseInt(process.env.SESSION_LIFETIME_MS) : 30*60*1000; // 30 minutes default
+
+async function reapStaleSessions(sessionEndHook: AsyncSessionLifecycleHook|undefined): Promise<void> {
+
+  console.log("reaping loop")
+  for (const session of sessionStore.expiredSessions(sessionLifetimeMs)) {
+    console.log(`reaping stale session ${session.id}`);
+    if (sessionEndHook) {
+      await sessionEndHook(session)
+    }
+    sessionStore.deleteSession(session.id)
+  }
+}
+
 export function createMcpServerApp(options: { 
                                       defineTools?: (server:McpServer) => void;
-                                      sessionInitHook?: (session:Session) => Promise<void>;
-                                      sessionEndHook?: (session:Session) => Promise<void>;
+                                      sessionInitHook?: AsyncSessionLifecycleHook;
+                                      sessionEndHook?: AsyncSessionLifecycleHook;
                                   }): express.Router {
   const router = express.Router();
 
@@ -188,6 +203,7 @@ export function createMcpServerApp(options: {
       if (options.sessionInitHook) {
         await options.sessionInitHook(session);
       }
+      await reapStaleSessions(options.sessionEndHook);
       return;
     } else {
       res.status(400).json({
@@ -202,7 +218,6 @@ export function createMcpServerApp(options: {
     }
   });
 
-  // MCP GET/DELETE
   const handleGetSessionRequest = async (req: express.Request, res: express.Response) => {
     const sessionId = req.headers['mcp-session-id'] as string | undefined;
     let session:Session|undefined = undefined;
@@ -213,6 +228,7 @@ export function createMcpServerApp(options: {
 
     const transport = session.transport
     await transport.handleRequest(req, res);
+    await reapStaleSessions(options.sessionEndHook);
   };
 
   const handleDeleteSessionRequest = async (req: express.Request, res: express.Response) => {
@@ -237,6 +253,7 @@ export function createMcpServerApp(options: {
       console.log("no transport.close function exists");
     }
     res.status(204).end(); // No Content
+    await reapStaleSessions(options.sessionEndHook);
   };
 
   router.get('/mcp', handleGetSessionRequest);

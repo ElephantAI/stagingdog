@@ -10,15 +10,23 @@ export interface SessionData {
   [key: string]: unknown;
 }
 
+
 export class Session {
   id: string;
   transport: SessionTransport;
   data: SessionData;
+  // @ts-ignore
+  touchedAt: number
 
   constructor(id: string, transport: SessionTransport, data: SessionData = {}) {
     this.id = id;
     this.transport = transport;
     this.data = data;
+    this.touch()
+  }
+
+  touch() {
+    this.touchedAt = Date.now();
   }
 
 }
@@ -30,11 +38,13 @@ export class Session {
 export class SessionStore {
   private readonly sessions: Map<string, Session> = new Map();
 
+
   public add(session:Session) {
     if (this.hasSession(session.id)) {
       throw new Error(`Session with ID ${session.id} already exists`);
     }
     this.sessions.set(session.id, session );
+    session.touch()
   }
 
   /**
@@ -56,7 +66,14 @@ export class SessionStore {
    * @returns The session data, or undefined if not found
    */
   public getSession(sessionId: string): Session | undefined {
-    return this.sessions.get(sessionId);
+    const session: Session|undefined = this.sessions.get(sessionId);
+    if (session) { session.touch() }
+    return session
+  }
+
+  public expiredSessions(maxAge:number) : Array<Session> {
+    const minTouchTime = Date.now() - maxAge;
+    return Array.from(this.sessions.values()).filter(session => session.touchedAt < minTouchTime)
   }
 
   /**
@@ -73,6 +90,7 @@ export class SessionStore {
     const session:Session = this.getSession(sessionId)!;
     const updatedSessionData: SessionData = { ...session, ...data };
     session.data=updatedSessionData
+    session.touch()
 
   }
 
