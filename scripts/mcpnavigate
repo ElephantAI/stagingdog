@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 TMPFILE=$(mktemp)
-curl -s -D "$TMPFILE" -o /dev/null http://localhost:3088/mcp   \
+curl -s -D "$TMPFILE" http://localhost:3088/mcp   \
   -H "Accept: application/json, text/event-stream" \
   -H "Content-Type: application/json"   \
   -d '{
@@ -29,27 +29,12 @@ curl -i -X POST http://localhost:3088/mcp   \
     "id": "1",
     "method": "tools/call",
     "params": {
-      "name": "imagine",
+      "name": "navigateTo",
       "arguments": {
-            "lower": 1,
-            "upper": 100
+            "url": "https://staging.elephantllm.com",
+            "screenshot":  { "width": 1280, "height":720 },
+            "observations": true
           }
-    }
-  }'
-
-sleep 1
-
-curl -i -X POST http://localhost:3088/mcp   \
-  -H "Accept: application/json, text/event-stream" \
-  -H "Content-Type: application/json"   \
-  -H "mcp-session-id: $MCP_SESSION_ID" \
-  -d '{
-    "jsonrpc": "2.0",
-    "id": "2",
-    "method": "tools/call",
-    "params": {
-      "name": "reveal",
-      "arguments" : {}
     }
   }'
 

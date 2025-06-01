@@ -2,7 +2,7 @@ import express, { type Request, type Response, type NextFunction, type Applicati
 import { createServer, type Server as HttpServer } from 'node:http';
 import cors from 'cors';
 import {createMcpServerApp } from './mcpServer.js';
-import { defineTools } from './tools/defineTools.js'
+import { defineTools, sessionInitHook, sessionEndHook } from './tools/defineTools.js'
 
 // Create Express application
 const app: Application = express();
@@ -17,7 +17,7 @@ app.use(cors({
 
 // Mount MCP routes
 
-const mcpApp = createMcpServerApp({defineTools});
+const mcpApp = createMcpServerApp({defineTools, sessionInitHook, sessionEndHook});
 app.use(mcpApp);
 
 // Request logging middleware

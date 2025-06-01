@@ -11,22 +11,38 @@ export interface SessionData {
 }
 
 
+export type AsyncSessionLifecycleHook = (session: Session) => Promise<void>;
+
 export class Session {
   id: string;
   transport: SessionTransport;
   data: SessionData;
   // @ts-ignore
   touchedAt: number
+  initHookPromise: Promise<void>|undefined
 
   constructor(id: string, transport: SessionTransport, data: SessionData = {}) {
     this.id = id;
     this.transport = transport;
-    this.data = data;
+    // make a deep copy of data
+    this.data = { ...data };
     this.touch()
   }
 
   touch() {
     this.touchedAt = Date.now();
+  }
+
+  initWith(initHook:AsyncSessionLifecycleHook) {
+      if (!this.initHookPromise) {
+        this.initHookPromise = initHook(this);
+      }
+  }
+  
+  async waitUntilInitialized():Promise<void> {
+    if (this.initHookPromise) {
+      await this.initHookPromise;
+    }
   }
 
 }

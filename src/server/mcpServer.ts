@@ -4,11 +4,10 @@ import { randomUUID } from 'node:crypto';
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { isInitializeRequest } from '@modelcontextprotocol/sdk/types.js';
 import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js';
-import { Session, sessionStore } from '../common/sessionStore.js'
+import { Session, AsyncSessionLifecycleHook, sessionStore } from '../common/sessionStore.js'
 
 import { ok as assert } from 'assert'
 
-type AsyncSessionLifecycleHook = (session: Session) => Promise<void>;
 
 function problemsWithInitializeParams(req: any): string|undefined {
   const problems: string[] = [];
@@ -172,6 +171,7 @@ export function createMcpServerApp(options: {
       await transport.handleRequest(req, res, req.body);
       return;
     } else if (!sessionId && looksLikeInitializeRequest(req.body)) {
+      console.log("looksLikeInitializeRequest")
       transport = new StreamableHTTPServerTransport({
         sessionIdGenerator: () => { const sessionId= randomUUID(); console.log(`generated sessionId ${sessionId}`); return sessionId; },
         onsessioninitialized: (newSessionId) => {
@@ -195,13 +195,20 @@ export function createMcpServerApp(options: {
 
       await mcpServer.connect(transport);
       await transport.handleRequest(req, res, req.body);
+      console.log("handled the initialize request")
 
       const sessionId = transport.sessionId;
       assert(sessionId,"No sessionId in a connected transport?")
       const session = sessionStore.getSession(sessionId);
       assert(session,`SessionId ${sessionId} was not added to SessionStore session initialization?`)
+      console.log("Checking initSessionHook")
       if (options.sessionInitHook) {
-        await options.sessionInitHook(session);
+        console.log(`calling initSessionHook with session ${sessionId}`)
+        session.initWith(options.sessionInitHook)
+        await session.waitUntilInitialized()
+        session.touch()
+      } else {
+        console.log("There is not a initSessionHook")
       }
       await reapStaleSessions(options.sessionEndHook);
       return;

@@ -18,8 +18,7 @@
     "test:coverage": "vitest run --coverage",
     "test:ui": "vitest --ui",
     "lint": "eslint . --ext .ts",
-    "format": "prettier --write \"src/**/*.ts\"",
-    "prepare": "npm run build"
+    "format": "prettier --write \"src/**/*.ts\""
   },
   "vitest": {
     "environment": "node",
@@ -43,6 +42,8 @@
   "license": "ISC",
   "description": "",
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.540.0",
+    "@browserbasehq/stagehand": "^2.2.1",
     "@modelcontextprotocol/sdk": "^1.11.4",
     "axios": "^1.9.0",
     "cors": "^2.8.5",
