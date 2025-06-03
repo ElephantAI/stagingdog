@@ -10,9 +10,9 @@ import { Browser,
          NavigationParams,
          navigationResultShape,
          NavigationResult,
-         performInstructionParamsShape,
+         performInstructionsParamsShape,
          PerformInstructionParams,
-         performInstructionResultShape,
+         performInstructionsResultShape,
          PerformInstructionResult
        } from '../../services/browser.js'
 
@@ -116,16 +116,16 @@ export function defineTools(server: McpServer): void {
     return result
   });
 
-  server.registerTool('performInstruction', {
+  server.registerTool('performInstructions', {
     description: 'Execute a natural language instruction and optionally capture results.',
-    inputSchema: performInstructionParamsShape,
-    outputSchema: performInstructionResultShape
+    inputSchema: performInstructionsParamsShape,
+    outputSchema: performInstructionsResultShape
   }, async (inputParams:PerformInstructionParams, extra:ExtraData) => {
-    const session = await requireSession('performInstruction',extra);
+    const session = await requireSession('performInstructions',extra);
     const browser:Browser = session.data.browser as Browser;
     assert(browser, `browser not initialized in session ${session.id}`)
     
-    const performInstructionResult:PerformInstructionResult = await browser.performInstruction(inputParams)
+    const performInstructionResult:PerformInstructionResult = await browser.performInstructions(inputParams)
     const result:CallToolResult = { structuredContent: performInstructionResult }
     return result
   });

@@ -49,9 +49,9 @@ export const navigationResultShape = {
 const navigationParamsSchema = z.object(navigationParamsShape)
 const navigationResultSchema = z.object(navigationResultShape)
 
-export const performInstructionParamsShape = {
-  instruction: z.string()
-               .describe("Natural language instruction to execute"),
+export const performInstructionsParamsShape = {
+  instructions: z.array(z.string())
+               .describe("Ordered list of natural language instructions to execute"),
   waitFor: z.union([z.string(), z.number().int()])
            .describe("Description of event to await or milliseconds to wait after action")
            .optional(),
@@ -66,10 +66,10 @@ export const performInstructionParamsShape = {
                      .optional()
 }
 
-export const performInstructionResultShape = navigationResultShape;
+export const performInstructionsResultShape = navigationResultShape;
 
-const performInstructionParamsSchema = z.object(performInstructionParamsShape);
-const performInstructionResultSchema = z.object(performInstructionResultShape);
+const performInstructionParamsSchema = z.object(performInstructionsParamsShape);
+const performInstructionResultSchema = z.object(performInstructionsResultShape);
 
 export type ViewportSpec = z.infer<typeof viewportSpecSchema>
 export type ObservationsSpec = z.infer<typeof observationsSpecSchema>
@@ -235,8 +235,8 @@ export class Browser {
     return result
   }
 
-  async performInstruction({
-    instruction,
+  async performInstructions({
+    instructions,
     waitFor,
     screenshot,
     observations
@@ -250,10 +250,12 @@ export class Browser {
       await this.stagehand.page.setViewportSize(screenshot)
     }
 
-    console.log(`${Date.now()}: about to page.act with instruction "${instruction}"`)
-    // Execute the instruction
+    console.log(`${Date.now()}: about to page.act with instructions "${JSON.stringify(instructions)}"`)
+    // Execute the instructions
     const timestampBeforeAct = Date.now()
-    await this.stagehand.page.act(instruction)
+    for (const instruction of instructions) {
+      await this.stagehand.page.act(instruction)
+    }
     const actTime = Date.now() - timestampBeforeAct
     console.log(`page act took ${actTime} ms`)
 

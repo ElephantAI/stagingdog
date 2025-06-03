@@ -47,9 +47,9 @@ curl -i -X POST http://localhost:3088/mcp   \
     "id": "2",
     "method": "tools/call",
     "params": {
-      "name": "performInstruction",
+      "name": "performInstructions",
       "arguments": {
-            "instruction": "click the sign in button",
+            "instructions": ["click the sign in button"],
             "screenshot":  { "width": 1280, "height":720 }
           }
     }
@@ -64,26 +64,11 @@ curl -i -X POST http://localhost:3088/mcp   \
     "id": "3",
     "method": "tools/call",
     "params": {
-      "name": "performInstruction",
+      "name": "performInstructions",
       "arguments": {
-            "instruction": "type steve@stevemadere.com in the email address input",
-            "screenshot":  { "width": 1280, "height":720 }
-          }
-    }
-  }'
-
-curl -i -X POST http://localhost:3088/mcp   \
-  -H "Accept: application/json, text/event-stream" \
-  -H "Content-Type: application/json"   \
-  -H "mcp-session-id: $MCP_SESSION_ID" \
-  -d '{
-    "jsonrpc": "2.0",
-    "id": "4",
-    "method": "tools/call",
-    "params": {
-      "name": "performInstruction",
-      "arguments": {
-            "instruction": "click the Continue with Email button",
+            "instructions": ["type steve@stevemadere.com in the email address input",
+                             "click the Continue with Email button"],
+            "waitFor": 3000,
             "screenshot":  { "width": 1280, "height":720 }
           }
     }
