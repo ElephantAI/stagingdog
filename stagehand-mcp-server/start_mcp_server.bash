@@ -30,6 +30,7 @@ else
       --env-file .env \
       -p "$HOST_PORT:3088" \
       -v "$SCRIPT_DIR:/app" \
+      -v /app/node_modules \
       "$IMAGE_NAME"
   fi
 fi
