@@ -43,7 +43,8 @@ export const navigationResultShape = {
               .optional(),
   observations:observationListSchema
               .describe("List of observed page elements, if observations were requested")
-              .optional()
+              .optional(),
+  completedAt: z.date().describe("The datetime at which the requested action completed")
 }
 
 const navigationParamsSchema = z.object(navigationParamsShape)
@@ -211,7 +212,8 @@ export class Browser {
     
     console.log(`about to record currentUrl`)
     const result: NavigationResult = {
-      currentUrl: this.stagehand.page.url()
+      currentUrl: this.stagehand.page.url(),
+      completedAt: new Date()
     }
 
     if (screenshot) {
@@ -232,6 +234,7 @@ export class Browser {
       console.log(`${Date.now()}: finished getting observations: ${JSON.stringify(result.observations,null,2)}`)
     }
 
+    result.completedAt = new Date()
     return result
   }
 
@@ -264,7 +267,8 @@ export class Browser {
 
     // Handle screenshot if requested
     const result: PerformInstructionResult = {
-      currentUrl: this.stagehand.page.url()
+      currentUrl: this.stagehand.page.url(),
+      completedAt: new Date()
     }
 
     if (screenshot) {
@@ -285,6 +289,7 @@ export class Browser {
       console.log(`${Date.now()}: finished getting observations`)
     }
 
+    result.completedAt = new Date()
     return result
   }
 }
