@@ -1,0 +1,3 @@
+-e ../../openai-agents-python
+openai>=1.87.0
+python-dotenv
